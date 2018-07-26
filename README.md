@@ -1,7 +1,7 @@
 # Verify deployed on rinkeyby blockchain contract via myEtherWallet
 Verify contract which deployed into rinkeby network via myEtherWallet
 
-This verification use selenium-cucumber protractor framework.
+This verification use protractor-cucumber framework.
 
 
 ## Getting Started
@@ -10,7 +10,7 @@ This verification use selenium-cucumber protractor framework.
 
 ```
 git clone https://github.com/j8kin/BDDContractViaMyEtherWallet.git
-cd TBD
+cd BDDContractViaMyEtherWallet
 ```
 
 ### Install Dependencies
