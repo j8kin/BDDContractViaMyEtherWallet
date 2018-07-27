@@ -10,7 +10,9 @@ var ContractsSteps = function() {
   /************************ Hooks **********************************/
   var deployConfig;
   var contracts_abis = {};
-  //this.setDefaultTimeout(120 * 1000); // already set in config file
+  browser.manage().timeouts().setScriptTimeout(6000000);
+  
+  this.setDefaultTimeout(2000 * 1000); // already set in config file
 
   // add a before feature hook
   this.BeforeFeature(function(feature, done) {
@@ -36,7 +38,7 @@ var ContractsSteps = function() {
 
   /*****************************************************************/
   /*********************Given Steps ********************************/
-  this.Given(/^I open myEtherWallet\.com page$/, {timeout: 120 * 1000}, function (callback) {
+  this.Given(/^I open myEtherWallet\.com page$/, {timeout: 2000 * 1000}, (done) => {
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
     // Write code here that turns the phrase above into concrete actions
@@ -45,18 +47,19 @@ var ContractsSteps = function() {
       // wait 1 sec to popup wellcome window appear
       browser.sleep(1000).then(()=>{
         // click close
-        element(by.css('[ng-click="onboardModal.close()"]')).click().then(()=>{
+        element.all(by.css('[ng-click="onboardModal.close()"]')).first().click().then(()=>{
           // select rinkeyby (etherscan.io)
-          browser.executeScript("arguments[0].click();", element(by.xpath('//a[contains(text(), "Rinkeby")]'))).then(()=>{
+          browser.executeScript("arguments[0].click();", element.all(by.xpath('//a[contains(text(), "Rinkeby")]')).first()).then(()=>{
             // wait 1 sec to hide popup wellcome window
             browser.sleep(1000).then(()=>{
               // close welcome popup window
-              element(by.css('[ng-click="onboardModal.close()"]')).click().then(()=>{
+              element.all(by.css('[ng-click="onboardModal.close()"]')).first().click().then(()=>{
                 // wait 1 sec to hide popup wellcome window
                 browser.sleep(1000).then(()=>{
                   // click on Contract Tab
-                  element(by.css('[class="nav-item NAV_Contracts"]')).click().then(()=>{
-                        callback();
+                  //element(by.css('[@class="nav-item NAV_Contracts"]')).click().then(()=>{
+                  element(by.xpath('//*[@class="nav-item NAV_Contracts" or @class="nav-item NAV_Contracts active"]')).click().then(()=>{
+                      done();
                   });
                 });
               });
@@ -67,7 +70,7 @@ var ContractsSteps = function() {
     });
   });
 
-  this.Given(/^Current election "([^"]*)" is (\d+)$/, {timeout: 200 * 1000}, (property, cycle, done) => {
+  this.Given(/^Current election "([^"]*)" is (\d+)$/, {timeout: 2000 * 1000}, (property, cycle, done) => {
     this.page = new ContractsPage(deployConfig, contracts_abis); //WTF????
 
     this.page.accessContract("Governance").then(()=>{
@@ -77,15 +80,56 @@ var ContractsSteps = function() {
       });
     });
   });
+  /*********************When Steps ********************************/
+  this.When(/^I claim "([^"]*)" from "([^"]*)" contract to:$/, {timeout: 2000 * 1000}, (nTokens, contractName, table, done) => {
+    // switch to Check TX status and then back to Contracts to be able to select a new wallet
+    var itemsProcessed = 0;
+    wallets_to_claim = table.rows();
+    wallets_to_claim.forEach((wallet) => {
+      this.page.writeContractData("Governance", "claim",nTokens,wallet[0]).then(()=>{
+        browser.sleep(2000);
+        itemsProcessed++;
+        if(itemsProcessed === wallets_to_claim.length) {
+          done();
+        }
+      });
+    });
+  });
 
-  //Then Write setBlockNumber to 111111 in Governance contract
-  this.Then(/^Write "([^"]*)" to "([^"]*)" in "([^"]*)" contract/, {timeout: 200 * 1000}, (writeValue, PropName, contractName, done) => {
+  //example:
+  //When I write setBlockNumber to 111111 in Governance contract
+  this.When(/^I write "([^"]*)" to "([^"]*)" in "([^"]*)" contract/, {timeout: 2000 * 1000}, (writeValue, PropName, contractName, done) => {
+    this.page = new ContractsPage(deployConfig, contracts_abis); //WTF????
+	
+	this.page.writeContractData(contractName, PropName,writeValue, "Wallet1").then(()=>{
+		done();
+	});
+  });
+  
+  /*********************Then Steps ********************************/
+  //for example:
+  //Then In "Governance" contract current "stage" is "1"
+  this.Then(/^In "([^"]*)" contract current "([^"]*)" is "([^"]*)"$/, function (contractName, propName, expectedVal, done) {
+    // Write code here that turns the phrase above into concrete actions
     this.page = new ContractsPage(deployConfig, contracts_abis); //WTF????
 
-    console.log("Then Write "+writeValue+" to "+PropName+" in "+contractName+" contract");
-    done(null, 'pending');
+    this.page.accessContract(contractName).then(()=>{
+      this.page.readContractProperty(propName, function(val) {
+        expect(val).to.equal(expectedVal);
+        done();
+      });
+    });
   });
-  /*********************Then Steps ********************************/
+	   
+  //Then Write "submit" to "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13" in Governance contract from Wallet1
+  this.Then(/^Write "([^"]*)" to "([^"]*)" in "([^"]*)" contract from "([^"]*)"/, {timeout: 2000 * 1000}, (writeValue, PropName, contractName, walletId, done) => {
+    this.page = new ContractsPage(deployConfig, contracts_abis); //WTF????
+	
+	this.page.writeContractData(contractName, PropName,writeValue, walletId).then(()=>{
+		done();
+	});
+  });
+
 };
 
 module.exports = ContractsSteps;
