@@ -188,12 +188,36 @@ var ContractsSteps = function() {
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
     this.page.accessContract(contractName).then(()=>{
-      this.page.readContractDataValue(propName, cycleNum, function(val) {
+      if (expectedVal.toLowerCase() == 'true' || expectedVal.toLowerCase() == 'false')
+      {
+        this.page.readContractDataValueBool(propName, cycleNum, function(val) {
+          expect(val.toLowerCase()).to.equal(expectedVal.toLowerCase());
+          done();
+        });
+      }
+      else {
+        this.page.readContractDataValue(propName, cycleNum, function(val) {
+          expect(val).to.equal(expectedVal);
+          done();
+        });
+      }
+    });
+  });
+
+  //Then "candidateVoters" in "Governance" contract for cycle "2" and "candidate address" "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13" and "voters address" "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "324000000000000000000000000"
+  this.Then(/^"([^"]*)" in "([^"]*)" contract for cycle "([^"]*)" and "([^"]*)" "([^"]*)" and "([^"]*)" "([^"]*)" is equal to "([^"]*)"$/, function (propName, contractName, cycleNum, dummyStr1, addr1, dummyStr2, addr2, expectedVal, done) {
+    // Write code here that turns the phrase above into concrete actions
+    //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
+    this.page = new ContractsPage(deployConfig, contracts_abis); //WTF????
+
+    this.page.accessContract(contractName).then(()=>{
+      this.page.readContractDataValue3(propName, cycleNum, addr1, addr2, function(val) {
         expect(val).to.equal(expectedVal);
         done();
       });
     });
   });
+  //done(null, 'pending');
 };
 
 module.exports = ContractsSteps;

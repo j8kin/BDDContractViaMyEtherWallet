@@ -83,6 +83,30 @@ var ContractorPage = function(deploy_config, contracts_abis) {
     });
   };
 
+  /**
+   * (internal) Click on Read button and return value read from Contract
+   * @returns {Promise} a promise with read value
+   */
+  this.clickAndReadBool = function(func) {
+    //Press "Read" button
+    element(by.css('[ng-click="readFromContract()"]')).click().then(()=>{
+      // give 2 sec for myetherwallet to get data from rinkeyby contract
+      browser.sleep(2000).then(()=>{
+        // there were two elemrnts on page with class "output-boolean" if this property contains "ng-hide" then opposit value is displayed and need to be returned
+        element(by.xpath('//span[contains(@class,"output-boolean") and contains(@class,"ng-hide")]')).getAttribute('class').then((value) => {
+          // element which contain ng-hide is not selected that is why return opposit element value
+          if (value.indexOf('true') != -1)
+          {
+            func('false');
+          }
+          else {
+            func('true');
+          }
+        });
+      });
+    });
+  };
+
   this.readContractDataCycleAddr = function(contractProperty, cycleNum, address, fn) {
     // return a promise so the calling function knows the task has completed
     return this.selectRWContract(contractProperty).then(()=>{
@@ -108,7 +132,6 @@ var ContractorPage = function(deploy_config, contracts_abis) {
     // return a promise so the calling function knows the task has completed
     return this.selectRWContract(contractProperty).then(()=>{
       element.all(by.css('[placeholder="151"]')).then((items)=>{
-        //expect(items.length).toBe(2); //just to make sure that evrything is ok
         // set first input integer value
         items[0].sendKeys(intInVal1);
         // set second input integer value
@@ -146,6 +169,45 @@ var ContractorPage = function(deploy_config, contracts_abis) {
     return this.selectRWContract(contractProperty).then(()=>{
       element.all(by.css('[placeholder="151"]')).first().sendKeys(inputStr).then(()=>{
         this.clickAndRead((output) => {fn(output)});
+      });
+    });
+  };
+
+  /**
+   * Read Contract Data with Input parameter equal to int
+   * @param {string} contractProperty Contract Property to be read
+   * @param {string} inputStr parameter string
+   * @returns {Promise} a promise with read value
+   */
+  this.readContractDataValueBool = function(contractProperty, inputStr, fn) {
+    return this.selectRWContract(contractProperty).then(()=>{
+      element.all(by.css('[placeholder="151"]')).first().sendKeys(inputStr).then(()=>{
+        this.clickAndReadBool((output) => {fn(output)});
+      });
+    });
+  };
+
+  /**
+   * Read Contract Data when first parameter is int and other two is address
+   * @param {string} contractProperty Contract Property to be read
+   * @param {string} inputStr parameter string
+   * @param {string} addr1 parameter address
+   * @param {string} addr2 parameter address
+   * @returns {Promise} a promise with read value
+   */
+  this.readContractDataValue3 = function(contractProperty, inputStr, addr1, addr2, fn) {
+    return this.selectRWContract(contractProperty).then(()=>{
+      element.all(by.css('[placeholder="151"]')).first().sendKeys(inputStr).then(()=>{
+        element.all(by.css('[placeholder="0x314156..."]')).then((items) => {
+          // set first input integer value
+          items[0].sendKeys(addr1);
+          // set second input integer value
+          items[1].sendKeys(addr2);
+          // wait 1 sec to make sure that both values are put before we press "Read"
+          browser.sleep(1000).then(()=>{
+            this.clickAndRead((output) => {fn(output)});
+          });
+        });
       });
     });
   };

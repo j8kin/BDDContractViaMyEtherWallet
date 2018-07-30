@@ -20,4 +20,6 @@ Feature:
 		Then "candidates" in "Governance" contract for cycle "3" and "candidate number" is "1" equal to "0x31f379f0ec7b70c8ae92a3cf9d9a1e290779f3d4"
 		Then "tokenStakes" in "Governance" contract for address "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "0"
 		Then "candidateCount" in "Governance" contract for cycle "3" is equal to "2"
-		#Then "isQuorumReached" in "Governance" contract for cycle "3" is equal to "TRUE"
+		Then "isQuorumReached" in "Governance" contract for cycle "3" is equal to "false"
+		Then "isQuorumReached" in "Governance" contract for cycle "2" is equal to "true"
+		Then "candidateVoters" in "Governance" contract for cycle "2" and "candidate address" "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13" and "voters address" "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "324000000000000000000000000"
