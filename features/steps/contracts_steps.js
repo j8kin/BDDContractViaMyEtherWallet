@@ -60,21 +60,10 @@ var ContractsSteps = function() {
               // close welcome popup window
               element.all(by.css('[ng-click="onboardModal.close()"]')).first().click().then(()=>{
                 // wait 1 sec to hide popup wellcome window
-                browser.sleep(1000).then(()=>{
-                  /*
-                  // click on Contract Tab
-                  //element(by.css('[@class="nav-item NAV_Contracts"]')).click().then(()=>{
-                  element(by.xpath('//*[@class="nav-item NAV_Contracts" or @class="nav-item NAV_Contracts active"]')).click().then(()=>{
-                    browser.sleep(1000).then(()=>{
-                      done();
-                    });
-                  });
-                  */
-                  done();
-                });
+                browser.sleep(1000).then(()=> done());
               });
             });
-          });
+          }).catch((err)=> done());;
         });
       });
     });
@@ -98,15 +87,66 @@ var ContractsSteps = function() {
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
     this.page.accessContract("Governance").then(()=>{
-      this.page.readContractProperty("cycle", function(cCycle) {
+      this.page.readContractProperty("cycleCounter", function(cCycle) {
         currentCycle = cCycle;
         done();
       });
     });
   });
 
-  /*********************When Steps ********************************/
-  this.When(/^I claim "([^"]*)" from "([^"]*)" contract to:$/, {timeout: 2000 * 1000}, (nTokens, contractName, table, done) => {
+  //Given I switch to a new election cycle
+  this.Given(/^I switch to a new election cycle$/, {timeout: 2000 * 1000}, (done) => {
+    // to switch to another election cycle it is necessary to perform next following steps:
+    // 1. set stage to 0 (set setBlockNumber to 555555)
+    // 2. set approve from Owner Wallet
+    // 3. set close from Owner Wallet
+    // 4. Update currentCycle
+
+    //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
+    this.page = new ContractsPage(deployConfig, contracts_abis);
+
+    this.page.switchToNextCycle().then(()=>{
+      this.page.readContractProperty("cycle", function(cCycle) {
+        currentCycle = cCycle;
+        done();
+      });
+    });
+  });
+  //Given election stage is set to 1
+  this.Given(/^election stage is set to (\d)$/, {timeout: 2000 * 1000}, (expStage, done) => {
+    // to switch to another election cycle it is necessary to perform next following steps:
+    // 1. set stage to 0 (set setBlockNumber to 555555)
+    // 2. set approve from Owner Wallet
+    // 3. set close from Owner Wallet
+    // 4. Update currentCycle
+
+    //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
+    this.page = new ContractsPage(deployConfig, contracts_abis);
+
+    this.page.readContractProperty("stage", function(cStage) {
+      if (cStage == expStage) {
+        done();
+      }
+      else {
+        this.page = new ContractsPage(deployConfig, contracts_abis); //WTF???
+
+        this.page.switchToNextCycle().then(()=>{
+          this.page.readContractProperty("stage", function(cStage) {
+            if (cStage == expStage) {
+              done();
+            }
+            else {
+              // there are 3 cycles 1 Governance then 2 DM then 1 Gov 2 DM etc
+              // that is why we need max 2 time switch cycle to gain necessary stage
+              this.page.switchToNextCycle().then(()=>done());
+            }
+          });
+        });
+      }
+    });
+  });
+
+  this.Given(/^I claim "([^"]*)" from "([^"]*)" contract to:$/, {timeout: 2000 * 1000}, (nTokens, contractName, table, done) => {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
@@ -126,13 +166,14 @@ var ContractsSteps = function() {
     });
   });
 
+  /*********************When Steps ********************************/
   //example:
   //When I write setBlockNumber to 111111 in Governance contract
   this.When(/^I write "([^"]*)" to "([^"]*)" in "([^"]*)" contract/, {timeout: 2000 * 1000}, (writeValue, PropName, contractName, done) => {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
     this.page.writeContractData(contractName, PropName,writeValue, "Wallet1").then(()=>{
-      done();
+      browser.sleep(20000).then(()=>done());
     });
   });
 
@@ -142,10 +183,27 @@ var ContractsSteps = function() {
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
     this.page.writeContractData(contractName, propName, writeValue, "Wallet1").then(()=>{
-      done();
+      browser.sleep(20000).then(()=>done());
     });
   });
+  //I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet1"
+  this.When(/^I perform "([^"]*)" with "([^"]*)" address and "([^"]*)" in "([^"]*)" contract from "([^"]*)"/, {timeout: 2000 * 1000}, (propName, addrName, value, contractName, walletId, done) => {
+    //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
 
+    var spenderAddr = "";
+    if (addrName.indexOf("Wallet") != -1) {
+      spenderAddr = deployConfig['wallets'][addrName+"_ADDR"];
+    }
+    else {
+      spenderAddr = deployConfig['contracts'][addrName];
+    }
+
+    this.page = new ContractsPage(deployConfig, contracts_abis); //WTF???
+
+    this.page.writeContractData2(contractName, propName, spenderAddr, value, walletId).then(()=>{
+      browser.sleep(20000).then(()=>done());
+    });
+  });
   /*********************Then Steps ********************************/
   /**** These steps are used only to verify some data in contract */
   /**** avoid to set any values in these steps                    */
@@ -197,8 +255,9 @@ var ContractsSteps = function() {
 
   //Then "candidates" in "Governance" contract for "3" cycle and "candidate number" is "0" equal to "0x31f379f0ec7b70c8ae92a3cf9d9a1e290779f3d4"
   //Then "candidates" in "Governance" contract for "current" cycle and "candidate number" is "0" equal to "0x31f379f0ec7b70c8ae92a3cf9d9a1e290779f3d4"
-  // dummyString is not used and create only to create better and at the same time more flexible description
-  this.Then(/^"([^"]*)" in "([^"]*)" contract for "([^"]*)" cycle and "([^"]*)" is "([^"]*)" equal to "([^"]*)"$/, function (propName, contractName, cycleNum, dummyString, intVal, expectedVal, done) {
+  //And "voterCandidate" in "Governance" contract for "current" cycle and "0xF85A21fE0f4E9f685f78620db86964a93878E4Fb" is equal to "0x31f379f0ec7b70c8ae92a3cf9d9a1e290779f3d4"
+  //Then "voterCandidate" in "Governance" contract for "current" cycle and "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13"
+  this.Then(/^"([^"]*)" in "([^"]*)" contract for "([^"]*)" cycle and "([^"]*)" is equal to "([^"]*)"$/, function (propName, contractName, cycleNum, intVal, expectedVal, done) {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
     this.page.accessContract(contractName).then(()=>{
@@ -207,10 +266,18 @@ var ContractsSteps = function() {
       {
         cCycle = currentCycle;
       }
-      this.page.readContractDataTwoInt(propName, cCycle, intVal, function(val) {
-        expect(val).to.equal(expectedVal);
-        done();
-      });
+      if (intVal.startsWith("0x")){
+        this.page.readContractDataCycleAddr(propName, cCycle, intVal, function(val) {
+          expect(val).to.equal(expectedVal);
+          done();
+        });
+      }
+      else {
+        this.page.readContractDataTwoInt(propName, cCycle, intVal, function(val) {
+          expect(val).to.equal(expectedVal);
+          done();
+        });
+      }
     });
   });
 
@@ -233,13 +300,13 @@ var ContractsSteps = function() {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
-    this.page.accessContract(contractName).then(()=>{
-      var cCycle = cycleNum;
-      if (cCycle == "current")
-      {
-        cCycle = currentCycle;
-      }
+    var cCycle = cycleNum;
+    if (cCycle == "current")
+    {
+      cCycle = currentCycle;
+    }
 
+    this.page.accessContract(contractName).then(()=>{
       if (expectedVal.toLowerCase() == 'true' || expectedVal.toLowerCase() == 'false')
       {
         this.page.readContractDataValueBool(propName, cCycle, function(val) {

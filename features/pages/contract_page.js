@@ -221,13 +221,77 @@ var ContractorPage = function(deploy_config, contracts_abis) {
   };
 
   /******************************************************************************/
+  this.switchToNextCycle = function() {
+    return this.accessContract("Governance").then(()=>{
+      this.writeContractData("Governance", "setBlockNumber","555555", "Owner").then(()=>{
+        //TODO: replace with wait rinkeby transaction complete
+        browser.sleep(20000).then(()=>{
+          this.writeContractDataBool("Governance", "approve","true", "Owner").then(()=>{
+            //TODO: replace with wait rinkeby transaction complete
+            browser.sleep(20000).then(()=>{
+              this.writeContractDataNone("Governance", "close", "Owner").then(()=>{
+                browser.sleep(20000);
+              });
+            });
+          });
+        });
+      });
+    });
+  };
+
+  this.writeContractDataNone = function(contractName, contractProperty, walletId) {
+    // return a promise so the calling function knows the task has completed
+    //console.log("Set " + contractProperty + " to "+ value + " from wallet: '"+walletId+"'");
+    return this.accessContract(contractName).then(()=>{
+      this.selectRWContract(contractProperty).then(()=>{
+        // verify that it is necessary to choose Wallet
+        browser.isElementPresent(by.xpath('//input[@ng-model="walletType" and @value="pasteprivkey"]')).then((unlockWallet)=>{
+          if (unlockWallet) {
+            //Click on Private Key
+            if (walletId == ""){
+              walletId = "Wallet1"
+            }
+            let wallet_PK = deployConfig["wallets"][walletId+"_PK"];
+            element(by.xpath('//input[@ng-model="walletType" and @value="pasteprivkey"]')).click().then(()=>{
+              element(by.css('[ng-change="onPrivKeyChange()"]')).sendKeys(wallet_PK).then(()=>{
+                //press Unlock wallet button
+                element(by.css('[ng-click="decryptWallet()"]')).click();
+              });
+            });
+          }
+          element(by.css('[ng-click="generateContractTx()"]')).click().then(()=>{
+            browser.sleep(1000).then(()=>{
+              //generate transaction
+              element.all(by.css('[ng-model="tx.gasLimit"]')).first().sendKeys("5000000").then(()=>{
+                //select transaction
+                element.all(by.css('[ng-click="generateTx()"]')).first().click().then(()=>{
+                  browser.sleep(1000).then(()=>{
+                    // Click "I'm sure'
+                    //TODO: probably it is necessary to return transaction Hash
+                    element.all(by.css('[ng-click="sendTx()"]')).first().click();
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  };
 
   this.writeContractData = function(contractName, contractProperty, value, walletId) {
     // return a promise so the calling function knows the task has completed
     //console.log("Set " + contractProperty + " to "+ value + " from wallet: '"+walletId+"'");
     return this.accessContract(contractName).then(()=>{
       this.selectRWContract(contractProperty).then(()=>{
-        element(by.css('[placeholder="151"]')).sendKeys(value).then(()=>{
+        var searchPattern = "";
+        if (value.startsWith("0x")){
+          searchPattern = '[placeholder="0x314156..."]';
+        }
+        else {
+          searchPattern = '[placeholder="151"]'
+        }
+        element(by.css(searchPattern)).sendKeys(value).then(()=>{
           // verify that it is necessary to choose Wallet
           browser.isElementPresent(by.xpath('//input[@ng-model="walletType" and @value="pasteprivkey"]')).then((unlockWallet)=>{
             if (unlockWallet) {
@@ -263,6 +327,99 @@ var ContractorPage = function(deploy_config, contracts_abis) {
       });
     });
   };
+
+  this.writeContractDataBool = function(contractName, contractProperty, value, walletId) {
+    // return a promise so the calling function knows the task has completed
+    //console.log("Set " + contractProperty + " to "+ value + " from wallet: '"+walletId+"'");
+    return this.accessContract(contractName).then(()=>{
+      this.selectRWContract(contractProperty).then(()=>{
+        /*
+        <input ng-model="input.value" type="radio" name="optradio-status" ng-value="true" class="ng-pristine ng-untouched ng-valid ng-empty" value="true">
+        */
+        element(by.xpath('//input[@ng-model="input.value" and @value="'+value.toLowerCase()+'"]')).click().then(()=>{
+          // verify that it is necessary to choose Wallet
+          browser.isElementPresent(by.xpath('//input[@ng-model="walletType" and @value="pasteprivkey"]')).then((unlockWallet)=>{
+            if (unlockWallet) {
+              //Click on Private Key
+              if (walletId == ""){
+                walletId = "Wallet1"
+              }
+              let wallet_PK = deployConfig["wallets"][walletId+"_PK"];
+              element(by.xpath('//input[@ng-model="walletType" and @value="pasteprivkey"]')).click().then(()=>{
+                element(by.css('[ng-change="onPrivKeyChange()"]')).sendKeys(wallet_PK).then(()=>{
+                  //press Unlock wallet button
+                  element(by.css('[ng-click="decryptWallet()"]')).click();
+                });
+              });
+            }
+            element(by.css('[ng-click="generateContractTx()"]')).click().then(()=>{
+              browser.sleep(1000).then(()=>{
+                //generate transaction
+                element.all(by.css('[ng-model="tx.gasLimit"]')).first().sendKeys("5000000").then(()=>{
+                  //select transaction
+                  element.all(by.css('[ng-click="generateTx()"]')).first().click().then(()=>{
+                    browser.sleep(1000).then(()=>{
+                      // Click "I'm sure'
+                      //TODO: probably it is necessary to return transaction Hash
+                      element.all(by.css('[ng-click="sendTx()"]')).first().click();
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
+  };
+
+  this.writeContractData2 = function(contractName, contractProperty, addr, value, walletId) {
+    // return a promise so the calling function knows the task has completed
+    //console.log("Set " + contractProperty + " to "+ value + " from wallet: '"+walletId+"'");
+    return this.accessContract(contractName).then(()=>{
+      this.selectRWContract(contractProperty).then(()=>{
+        /*
+        <input class="form-control ng-pristine ng-valid ng-empty is-invalid ng-touched" type="text" placeholder="0x314156..." ng-model="input.value" ng-class="Validator.isValidAddress(input.value) ? 'is-valid' : 'is-invalid'">
+        */
+        element(by.css('[placeholder="0x314156..."]')).sendKeys(addr).then(()=>{
+          element(by.css('[placeholder="151"]')).sendKeys(value).then(()=>{
+            // verify that it is necessary to choose Wallet
+            browser.isElementPresent(by.xpath('//input[@ng-model="walletType" and @value="pasteprivkey"]')).then((unlockWallet)=>{
+              if (unlockWallet) {
+                //Click on Private Key
+                if (walletId == ""){
+                  walletId = "Wallet1"
+                }
+                let wallet_PK = deployConfig["wallets"][walletId+"_PK"];
+                element(by.xpath('//input[@ng-model="walletType" and @value="pasteprivkey"]')).click().then(()=>{
+                  element(by.css('[ng-change="onPrivKeyChange()"]')).sendKeys(wallet_PK).then(()=>{
+                    //press Unlock wallet button
+                    element(by.css('[ng-click="decryptWallet()"]')).click();
+                  });
+                });
+              }
+              element(by.css('[ng-click="generateContractTx()"]')).click().then(()=>{
+                browser.sleep(1000).then(()=>{
+                  //generate transaction
+                  element.all(by.css('[ng-model="tx.gasLimit"]')).first().sendKeys("5000000").then(()=>{
+                    //select transaction
+                    element.all(by.css('[ng-click="generateTx()"]')).first().click().then(()=>{
+                      browser.sleep(1000).then(()=>{
+                        // Click "I'm sure'
+                        //TODO: probably it is necessary to return transaction Hash
+                        element.all(by.css('[ng-click="sendTx()"]')).first().click();
+                      });
+                    });
+                  });
+                });
+              });
+            });
+          });
+        });
+      });
+    });
  };
+ ///add new function on this level
+};
 
 module.exports = ContractorPage;
