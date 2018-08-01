@@ -225,12 +225,12 @@ var ContractorPage = function(deploy_config, contracts_abis) {
     return this.accessContract("Governance").then(()=>{
       this.writeContractData("Governance", "setBlockNumber","555555", "Owner").then(()=>{
         //TODO: replace with wait rinkeby transaction complete
-        browser.sleep(20000).then(()=>{
+        browser.sleep(25000).then(()=>{
           this.writeContractDataBool("Governance", "approve","true", "Owner").then(()=>{
             //TODO: replace with wait rinkeby transaction complete
-            browser.sleep(20000).then(()=>{
+            browser.sleep(25000).then(()=>{
               this.writeContractDataNone("Governance", "close", "Owner").then(()=>{
-                browser.sleep(20000);
+                browser.sleep(25000);
               });
             });
           });

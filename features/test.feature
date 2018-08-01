@@ -1,3 +1,4 @@
+@ignore
 Feature: Test
 	Verify Governance contract of access-coin project
 	Important: If contract just deployed all Tokens need to be transfered to Governance Proxy
