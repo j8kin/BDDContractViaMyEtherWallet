@@ -13,6 +13,7 @@ var ContractsSteps = function() {
   // current cycle set by "Given I read current election cycle number"-step
   // should called in Background section
   var currentCycle = "0";
+  const writeTimer = 30000;
 
   browser.manage().timeouts().setScriptTimeout(6000000);
 
@@ -69,12 +70,25 @@ var ContractsSteps = function() {
     }).catch((err)=> done());;
   });
 
-  this.Given(/^Current election "([^"]*)" is (\d+)$/, {timeout: 2000 * 1000}, (property, cycle, done) => {
+  // Given current electon cycle is "Governance"
+  // Given current electon cycle is "DescisionModule"
+  this.Given(/^Current election cycle is "([^"]*)"$/, {timeout: 2000 * 1000}, (cycleName, done) => {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
+    if (cycleName.toLowerCase() == "governance") {
+      cycle = "0";
+    }
+    else {
+      if (cycleName.toLowerCase() == "descisionmodule") {
+        cycle = "1";
+      }
+      else {
+        assert.isOk(false, 'election cycle must be "Governance" or "DescisionModule"');
+      }
+    }
 
     this.page.accessContract("Governance").then(()=>{
-      this.page.readContractProperty(property, function(currentCycle) {
+      this.page.readContractProperty("cycle", function(currentCycle) {
         expect(currentCycle).to.equal(cycle);
         done();
       });
@@ -112,14 +126,25 @@ var ContractsSteps = function() {
       });
     });
   });
+
   //Given election cycle is set to 1
-  this.Given(/^election cycle is set to (\d)$/, {timeout: 2000 * 1000}, (expCycle, done) => {
+  this.Given(/^election cycle is set to "([^"]*)"$/, {timeout: 2000 * 1000}, (cycleName, done) => {
     // to switch to another election cycle it is necessary to perform next following steps:
     // 1. set stage to 0 (set setBlockNumber to 555555)
     // 2. set approve from Owner Wallet
     // 3. set close from Owner Wallet
     // 4. Update currentCycle
-
+    if (cycleName.toLowerCase() == "governance") {
+      expCycle = "0";
+    }
+    else {
+      if (cycleName.toLowerCase() == "descisionmodule") {
+        expCycle = "1";
+      }
+      else {
+        assert.isOk(false, 'election cycle must be "Governance" or "DescisionModule"');
+      }
+    }
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
     this.page.readContractProperty("cycle", function(cCycle) {
@@ -172,7 +197,7 @@ var ContractsSteps = function() {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
     this.page.writeContractData(contractName, PropName,writeValue, "Wallet1").then(()=>{
-      browser.sleep(25000).then(()=>done());
+      browser.sleep(writeTimer).then(()=>done());
     });
   });
 
@@ -181,9 +206,18 @@ var ContractsSteps = function() {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
-    this.page.writeContractData(contractName, propName, writeValue, "Wallet1").then(()=>{
-      browser.sleep(25000).then(()=>done());
-    });
+    address = deployConfig["contracts"][writeValue];
+    if (typeof address === 'undefined')
+    {
+      this.page.writeContractData(contractName, propName, writeValue, "Wallet1").then(()=>{
+        browser.sleep(writeTimer).then(()=>done());
+      });
+    }
+    else {
+      this.page.writeContractData(contractName, propName, address, "Wallet1").then(()=>{
+        browser.sleep(writeTimer).then(()=>done());
+      });
+    }
   });
 
   //
@@ -192,15 +226,23 @@ var ContractsSteps = function() {
       //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
       this.page = new ContractsPage(deployConfig, contracts_abis);
       this.page.writeContractDataBool(contractName, propName, writeValue, walletId).then(()=>{
-        browser.sleep(25000).then(()=>done());
+        browser.sleep(writeTimer).then(()=>done());
       });
     }
     else {
       //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
+      address = deployConfig["contracts"][writeValue];
       this.page = new ContractsPage(deployConfig, contracts_abis);
-      this.page.writeContractData(contractName, propName, writeValue, walletId).then(()=>{
-        browser.sleep(25000).then(()=>done());
-      });
+      if (typeof address === 'undefined') {
+        this.page.writeContractData(contractName, propName, writeValue, walletId).then(()=>{
+          browser.sleep(writeTimer).then(()=>done());
+        });
+      }
+      else {
+        this.page.writeContractData(contractName, propName, address, walletId).then(()=>{
+          browser.sleep(writeTimer).then(()=>done());
+        });
+      }
     }
   });
 
@@ -209,7 +251,7 @@ var ContractsSteps = function() {
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
     this.page.writeContractDataNone(contractName, propName, walletId).then(()=>{
-      browser.sleep(25000).then(()=>done());
+      browser.sleep(writeTimer).then(()=>done());
     });
   });
 
@@ -228,7 +270,7 @@ var ContractsSteps = function() {
     this.page = new ContractsPage(deployConfig, contracts_abis); //WTF???
 
     this.page.writeContractData2(contractName, propName, spenderAddr, value, walletId).then(()=>{
-      browser.sleep(25000).then(()=>done());
+      browser.sleep(writeTimer).then(()=>done());
     });
   });
   /*********************Then Steps ********************************/
@@ -261,7 +303,7 @@ var ContractsSteps = function() {
 
   //Then "voterCandidate" in "Governance" contract for "4" cycle and "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "0x0000000000000000000000000000000000000000"
   //Then "voterCandidate" in "Governance" contract for "current" cycle and "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "0x0000000000000000000000000000000000000000"
-  this.Then(/^"([^"]*)" in "([^"]*)" contract for  "([^"]*)" cycle and "([^"]*)" is equal to "([^"]*)"$/, function (propName, contractName, cycleNum, address, expectedVal, done) {
+  this.Then(/^"([^"]*)" in "([^"]*)" contract for  "([^"]*)" cycle and "([^"]*)" is equal to "([^"]*)"$/, function (propName, contractName, cycleNum, candidateName, expectedVal, done) {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
@@ -271,6 +313,7 @@ var ContractsSteps = function() {
       {
         cCycle = currentCycle;
       }
+      address = deployConfig["contracts"][candidateName];
       this.page.readContractDataCycleAddr(propName, cCycle, address, function(val) {
         expect(val).to.equal(expectedVal);
         done();
@@ -284,6 +327,7 @@ var ContractsSteps = function() {
   //Then "candidates" in "Governance" contract for "current" cycle and "candidate number" is "0" equal to "0x31f379f0ec7b70c8ae92a3cf9d9a1e290779f3d4"
   //And "voterCandidate" in "Governance" contract for "current" cycle and "0xF85A21fE0f4E9f685f78620db86964a93878E4Fb" is equal to "0x31f379f0ec7b70c8ae92a3cf9d9a1e290779f3d4"
   //Then "voterCandidate" in "Governance" contract for "current" cycle and "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13"
+  //Then "voterCandidate" in "Governance" contract for "99" cycle and "Wallet1" is equal to "Governance1"
   this.Then(/^"([^"]*)" in "([^"]*)" contract for "([^"]*)" cycle and "([^"]*)" is equal to "([^"]*)"$/, function (propName, contractName, cycleNum, intVal, expectedVal, done) {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
@@ -293,14 +337,26 @@ var ContractsSteps = function() {
       {
         cCycle = currentCycle;
       }
-      if (intVal.startsWith("0x")){
-        this.page.readContractDataCycleAddr(propName, cCycle, intVal, function(val) {
+      address = deployConfig["contracts"][intVal];
+      if (typeof address === 'undefined') {
+        address = deployConfig["wallets"][intVal+"_ADDR"];
+      }
+
+      expAddr = deployConfig["contracts"][expectedVal];
+      if (!(typeof expAddr === 'undefined')) {
+        expectedVal = expAddr;
+      }
+
+      if (typeof address === 'undefined')
+      {
+        // second parameter (intVal) is not an contract Name
+        this.page.readContractDataTwoInt(propName, cCycle, intVal, function(val) {
           expect(val).to.equal(expectedVal);
           done();
         });
       }
       else {
-        this.page.readContractDataTwoInt(propName, cCycle, intVal, function(val) {
+        this.page.readContractDataCycleAddr(propName, cCycle, address, function(val) {
           expect(val).to.equal(expectedVal);
           done();
         });
@@ -330,14 +386,19 @@ var ContractsSteps = function() {
 
   //Then "candidateCount" in "Governance" contract for "3" cycle is equal to "4"
   //Then "candidateCount" in "Governance" contract for "current" cycle is equal to "4"
+  //And "finalistWeight" in "Governance" contract for "current" cycle is equal to "972000000000000000000000001"
   this.Then(/^"([^"]*)" in "([^"]*)" contract for "([^"]*)" cycle is equal to "([^"]*)"$/, function (propName, contractName, cycleNum, expectedVal, done) {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
-
     var cCycle = cycleNum;
     if (cCycle == "current")
     {
       cCycle = currentCycle;
+    }
+    address = deployConfig["contracts"][expectedVal];
+    if (! (typeof address === 'undefined'))
+    {
+      expectedVal = address;
     }
 
     this.page.accessContract(contractName).then(()=>{
@@ -359,7 +420,7 @@ var ContractsSteps = function() {
 
   //Then "candidateVoters" in "Governance" contract for "2" cycle and "candidate address" "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13" and "voters address" "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "324000000000000000000000000"
   //Then "candidateVoters" in "Governance" contract for "current" cycle and "candidate address" "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13" and "voters address" "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "324000000000000000000000000"
-  this.Then(/^"([^"]*)" in "([^"]*)" contract for "([^"]*)" cycle and "([^"]*)" "([^"]*)" and "([^"]*)" "([^"]*)" is equal to "([^"]*)"$/, function (propName, contractName, cycleNum, dummyStr1, addr1, dummyStr2, addr2, expectedVal, done) {
+  this.Then(/^"([^"]*)" in "([^"]*)" contract for "([^"]*)" cycle and "([^"]*)" "([^"]*)" and "([^"]*)" "([^"]*)" is equal to "([^"]*)"$/, function (propName, contractName, cycleNum, dummyStr1, candidateName, dummyStr2, voterName, expectedVal, done) {
     // Write code here that turns the phrase above into concrete actions
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis); //WTF????
@@ -370,10 +431,18 @@ var ContractsSteps = function() {
       {
         cCycle = currentCycle;
       }
-      this.page.readContractDataValue3(propName, cCycle, addr1, addr2, function(val) {
-        expect(val).to.equal(expectedVal);
-        done();
-      });
+      addr1 = deployConfig["contracts"][candidateName];
+      addr2 = deployConfig["wallets"][voterName+"_ADDR"];
+      if (typeof addr1 === 'undefined' || typeof addr2 === 'undefined')
+      {
+        assert.isOk(false, 'candidate Name or voter Name is not valid');
+      }
+      else {
+        this.page.readContractDataValue3(propName, cCycle, addr1, addr2, function(val) {
+          expect(val).to.equal(expectedVal);
+          done();
+        });
+      }
     });
   });
   //done(null, 'pending');
