@@ -17,18 +17,16 @@ Feature: Election cycle
 			| Wallet4   |
 			| Wallet5   |
 
-  #Submit Candidate Phase
-  #Verify that if Governance election performed during Descision Module election phase then even if new Governance is elected, Governance will not be changed
-    Given Current election cycle is <electionCycle>
+		#Submit Candidate Phase
+		#Verify that if Governance election performed during Descision Module election phase then even if new Governance is elected, Governance will not be changed
+		Given Current election cycle is <electionCycle>
 		Given I read current election cycle number
-    When I write "111111" to "setBlockNumber" in "Governance" contract
-    Then In "Governance" contract current "stage" is "1"
-    #When I perform "submit" with "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13" parameter in "Governance" contract
+		When I write "111111" to "setBlockNumber" in "Governance" contract
+		Then In "Governance" contract current "stage" is "1"
 		When I perform "submit" with <candidate1> parameter in "Governance" contract
-    Then "candidateCount" in "Governance" contract for "current" cycle is equal to "1"
-    #When I perform "submit" with "0x31f379f0ec7b70c8ae92a3cf9d9a1e290779f3d4" parameter in "Governance" contract
+		Then "candidateCount" in "Governance" contract for "current" cycle is equal to "1"
 		When I perform "submit" with <candidate2> parameter in "Governance" contract
-    Then "candidateCount" in "Governance" contract for "current" cycle is equal to "2"
+		Then "candidateCount" in "Governance" contract for "current" cycle is equal to "2"
 
 	# Choose Candidate Phase
 	# Verify that if stage is 2 then Wallets could choose candidate by send transferSelect request
@@ -54,7 +52,7 @@ Feature: Election cycle
 		Then "finalist" in "Governance" contract for "current" cycle is equal to <candidate1>
 			And "finalistWeight" in "Governance" contract for "current" cycle is equal to "972000000000000000000000001"
 
-		#Wallet1 vote for Governance1, W2 -> G2, W3 - None, W4 -> G1, W5-> G2
+		#Wallet1 vote for candidate1, W2 -> candidate2, W3 - candidate2, W4 -> candidate1, W5-> candidate1
 		Then "voterCandidate" in "Governance" contract for "current" cycle and "Wallet1" is equal to <candidate1>
 			And "voterCandidate" in "Governance" contract for "current" cycle and "Wallet2" is equal to <candidate2>
 			And "voterCandidate" in "Governance" contract for "current" cycle and "Wallet3" is equal to <candidate2>
