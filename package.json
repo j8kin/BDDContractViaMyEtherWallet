@@ -14,5 +14,8 @@
     "prestart-webdriver": "webdriver-manager update",
     "start-webdriver": "webdriver-manager start",
     "protractor": "protractor protractor.conf.js"
+  },
+  "dependencies": {
+    "request": "^2.87.0"
   }
 }

@@ -5,6 +5,7 @@ const fs = require('fs');
 var ContractsSteps = function() {
 
   var ContractsPage = require("../pages/contract_page.js");
+  var RinkebyApi = require("../pages/rinkeyby_api.js");
 
   /*****************************************************************/
   /************************ Hooks **********************************/
@@ -466,6 +467,24 @@ var ContractsSteps = function() {
         });
       }
     });
+  });
+  
+  this.Then(/^the last transaction is "([^"]*)"$/, function (expTxStatus, done) {
+    this.rinkeyby = new RinkebyApi(deployConfig);
+	
+	this.rinkeyby.getTxHashStatus(lastTransactionHash).then((result)=>{
+		// { statusCode: 200, bodyString: '{"status":"1","message":"OK","result":{"isError":"0","errDescription":""}}' }
+		console.log(result);
+		var response = JSON.parse(result["bodyString"]);
+		var cStatus = "fail";
+		if (response["status"] == 1)
+		{
+			cStatus = "success";
+		}
+		expect(expTxStatus).to.equal(response);
+		done();
+	});
+
   });
   //done(null, 'pending');
 };
