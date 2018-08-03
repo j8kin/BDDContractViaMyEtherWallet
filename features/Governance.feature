@@ -1,6 +1,7 @@
 @Governance
+@DecisionModule
 Feature: Election cycle
-	This test verify election cycle both for Governance and DescisionModule contract
+	This test verify election cycle both for Governance and DecisionModule contract
 	Important: If contract just deployed all Tokens need to be transfered to Governance Proxy
 	Scenario Outline: Election cycle
 		Given I open myEtherWallet.com page
@@ -95,5 +96,6 @@ Feature: Election cycle
 		And I perform "close" in "Governance" contract from "Owner"
 
 Examples:
-	| electionCycle | candidate1    | candidate2    |
-	| "Governance"  | "Governance1" | "Governance2" |
+	| electionCycle      | candidate1        | candidate2        |
+	| "Governance"       | "Governance1"     | "Governance2"     |
+	| "DecisionModule"   | "DecisionModule1" | "DecisionModule2" |	

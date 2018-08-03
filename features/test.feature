@@ -13,10 +13,11 @@ Feature: Test
 		#	| Wallet4   |
 		#	| Wallet5   |
 
-  Scenario: Test Scenario
+  Scenario Outline: Test Scenario
   Verify that if Governance election performed during Descision Module election phase then even if new Governance is elected, Governance will not be changed
     #Given Current election "cycle" is 1
-		Then "voterCandidate" in "Governance" contract for "99" cycle and "Wallet1" is equal to "Governance1"
+	#	Then "voterCandidate" in "Governance" contract for "99" cycle and "Wallet1" is equal to "Governance1"
+		Given Current election cycle is <electionCycle>
     #When I write "111111" to "setBlockNumber" in "Governance" contract
 		#Then In "Governance" contract current "stage" is "1"
 		#Then "voterCandidate" in "Governance" contract for "1" cycle and "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "0x0000000000000000000000000000000000000000"
@@ -26,3 +27,6 @@ Feature: Test
 		#Then "isQuorumReached" in "Governance" contract for "3" cycle is equal to "false"
 		#Then "isQuorumReached" in "Governance" contract for "2" cycle is equal to "true"
 		#Then "candidateVoters" in "Governance" contract for "2" cycle and "candidate address" "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13" and "voters address" "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "324000000000000000000000000"
+Examples:
+	| electionCycle      | candidate1        | candidate2        |
+	| "DecisionModule"   | "DecisionModule1" | "DecisionModule2" |	

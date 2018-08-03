@@ -4,7 +4,8 @@ var expect = chai.expect;
 var ContractorPage = function(deploy_config, contracts_abis) {
   let deployConfig = deploy_config;
   let contractsAbis = contracts_abis;
-
+  const writeTimer = 30000;
+  
   this.get = function() {
     return browser.get('https://www.myetherwallet.com');
   };
@@ -17,7 +18,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
     return element(by.css('[class="nav-item NAV_CheckTxStatus"]')).click().then(()=>{
       browser.sleep(2000).then(()=>{
         element(by.xpath('//*[@class="nav-item NAV_Contracts" or @class="nav-item NAV_Contracts active"]')).click().then(()=>{
-          browser.sleep(1000).then(()=>{
+          browser.sleep(2000).then(()=>{
             browser.executeScript("arguments[0].value = '';",element(by.css('[placeholder="mewtopia.eth or 0xDECAF9CD2367cdbb726E904cD6397eDFcAe6068D"]'))).then(()=>{
               //set contract address
               element(by.css('[placeholder="mewtopia.eth or 0xDECAF9CD2367cdbb726E904cD6397eDFcAe6068D"]')).sendKeys(contract_ADDR).then(()=>{
@@ -145,7 +146,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
         // set second input integer value
         items[1].sendKeys(intInVal2);
         // wait 1 sec to make sure that both values are put before we press "Read"
-        browser.sleep(1000).then(()=>{
+        browser.sleep(2000).then(()=>{
           this.clickAndRead((output) => {fn(output)});
         });
       });
@@ -212,7 +213,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
           // set second input integer value
           items[1].sendKeys(addr2);
           // wait 1 sec to make sure that both values are put before we press "Read"
-          browser.sleep(1000).then(()=>{
+          browser.sleep(2000).then(()=>{
             this.clickAndRead((output) => {fn(output)});
           });
         });
@@ -225,12 +226,12 @@ var ContractorPage = function(deploy_config, contracts_abis) {
     return this.accessContract("Governance").then(()=>{
       this.writeContractData("Governance", "setBlockNumber","555555", "Owner").then(()=>{
         //TODO: replace with wait rinkeby transaction complete
-        browser.sleep(25000).then(()=>{
+        browser.sleep(writeTimer).then(()=>{
           this.writeContractDataBool("Governance", "approve","true", "Owner").then(()=>{
             //TODO: replace with wait rinkeby transaction complete
-            browser.sleep(25000).then(()=>{
+            browser.sleep(writeTimer).then(()=>{
               this.writeContractDataNone("Governance", "close", "Owner").then(()=>{
-                browser.sleep(25000);
+                browser.sleep(writeTimer);
               });
             });
           });

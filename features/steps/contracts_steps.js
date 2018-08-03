@@ -67,11 +67,11 @@ var ContractsSteps = function() {
           });
         });
       });
-    }).catch((err)=> done());;
+    });
   });
 
   // Given current electon cycle is "Governance"
-  // Given current electon cycle is "DescisionModule"
+  // Given current electon cycle is "DecisionModule"
   this.Given(/^Current election cycle is "([^"]*)"$/, {timeout: 2000 * 1000}, (cycleName, done) => {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
@@ -79,11 +79,11 @@ var ContractsSteps = function() {
       cycle = "0";
     }
     else {
-      if (cycleName.toLowerCase() == "descisionmodule") {
+      if (cycleName.toLowerCase() == "decisionmodule") {
         cycle = "1";
       }
       else {
-        assert.isOk(false, 'election cycle must be "Governance" or "DescisionModule"');
+        chai.assert.isOk(false, 'election cycle must be "Governance" or "DescisionModule"');
       }
     }
 
@@ -138,11 +138,11 @@ var ContractsSteps = function() {
       expCycle = "0";
     }
     else {
-      if (cycleName.toLowerCase() == "descisionmodule") {
+      if (cycleName.toLowerCase() == "decisionmodule") {
         expCycle = "1";
       }
       else {
-        assert.isOk(false, 'election cycle must be "Governance" or "DescisionModule"');
+        assert.isOk(false, 'election cycle must be "Governance" or "DecisionModule"');
       }
     }
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
@@ -178,7 +178,7 @@ var ContractsSteps = function() {
     var itemsProcessed = 0;
     wallets_to_claim = table.rows();
     wallets_to_claim.forEach((wallet) => {
-      this.page.writeContractData("Governance", "claim",nTokens,wallet[0]).then(()=>{
+      this.page.writeContractData(contractName, "claim",nTokens,wallet[0]).then(()=>{
         browser.sleep(2000);
         // this is necessary to avoid situation when test proceed when this step is not complete
         itemsProcessed++;

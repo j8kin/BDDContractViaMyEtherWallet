@@ -9,7 +9,9 @@
 		"Governance1": "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13",
 		"Governance2": "0x31f379f0ec7b70c8ae92a3cf9d9a1e290779f3d4",
 		"IncentivePool": "0xad0d676cef236b229dfd9df0499796216f449bdd",
-		"DecisionModule": "0xe9c4a470c42d31f2d7762d4fb32eef8b3504eed5"
+		"DecisionModule": "0xe9c4a470c42d31f2d7762d4fb32eef8b3504eed5",
+		"DecisionModule1": "0x03685ae1db12a447a55e98eed57fceb6c5ea422e",
+		"DecisionModule2": "0xd5fc665c2d06aeeb113408a7e4a95a265e22c6b6"
 	},
 	"wallets":
 	{
