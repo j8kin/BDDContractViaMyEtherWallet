@@ -14,6 +14,8 @@ var ContractsSteps = function() {
   // should called in Background section
   var currentCycle = "0";
   const writeTimer = 30000;
+  // store last transaction Hash to be able verify it with special step
+  var lastTransactionHash = "0x0"
 
   browser.manage().timeouts().setScriptTimeout(6000000);
 
@@ -67,7 +69,7 @@ var ContractsSteps = function() {
           });
         });
       });
-    });
+    }).catch((err)=> done());;
   });
 
   // Given current electon cycle is "Governance"
@@ -178,7 +180,9 @@ var ContractsSteps = function() {
     var itemsProcessed = 0;
     wallets_to_claim = table.rows();
     wallets_to_claim.forEach((wallet) => {
-      this.page.writeContractData(contractName, "claim",nTokens,wallet[0]).then(()=>{
+      this.page.writeContractData(contractName, "claim",nTokens,wallet[0], (txHash)=>{
+		lastTransactionHash = txHash;
+	  }).then(()=>{
         browser.sleep(2000);
         // this is necessary to avoid situation when test proceed when this step is not complete
         itemsProcessed++;
@@ -196,7 +200,9 @@ var ContractsSteps = function() {
   this.When(/^I write "([^"]*)" to "([^"]*)" in "([^"]*)" contract/, {timeout: 2000 * 1000}, (writeValue, PropName, contractName, done) => {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
-    this.page.writeContractData(contractName, PropName,writeValue, "Wallet1").then(()=>{
+    this.page.writeContractData(contractName, PropName,writeValue, "Wallet1", (txHash)=>{
+		lastTransactionHash = txHash;
+	}).then(()=>{
       browser.sleep(writeTimer).then(()=>done());
     });
   });
@@ -209,12 +215,16 @@ var ContractsSteps = function() {
     address = deployConfig["contracts"][writeValue];
     if (typeof address === 'undefined')
     {
-      this.page.writeContractData(contractName, propName, writeValue, "Wallet1").then(()=>{
+      this.page.writeContractData(contractName, propName, writeValue, "Wallet1", (txHash)=>{
+		lastTransactionHash = txHash;
+	  }).then(()=>{
         browser.sleep(writeTimer).then(()=>done());
       });
     }
     else {
-      this.page.writeContractData(contractName, propName, address, "Wallet1").then(()=>{
+      this.page.writeContractData(contractName, propName, address, "Wallet1", (txHash)=>{
+		lastTransactionHash = txHash;
+	  }).then(()=>{
         browser.sleep(writeTimer).then(()=>done());
       });
     }
@@ -225,7 +235,9 @@ var ContractsSteps = function() {
     if (writeValue.toLowerCase() == 'true' || writeValue.toLowerCase() == 'false') {
       //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
       this.page = new ContractsPage(deployConfig, contracts_abis);
-      this.page.writeContractDataBool(contractName, propName, writeValue, walletId).then(()=>{
+      this.page.writeContractDataBool(contractName, propName, writeValue, walletId, (txHash)=>{
+		lastTransactionHash = txHash;
+	  }).then(()=>{
         browser.sleep(writeTimer).then(()=>done());
       });
     }
@@ -234,12 +246,16 @@ var ContractsSteps = function() {
       address = deployConfig["contracts"][writeValue];
       this.page = new ContractsPage(deployConfig, contracts_abis);
       if (typeof address === 'undefined') {
-        this.page.writeContractData(contractName, propName, writeValue, walletId).then(()=>{
+        this.page.writeContractData(contractName, propName, writeValue, walletId, (txHash)=>{
+		  lastTransactionHash = txHash;
+	    }).then(()=>{
           browser.sleep(writeTimer).then(()=>done());
         });
       }
       else {
-        this.page.writeContractData(contractName, propName, address, walletId).then(()=>{
+        this.page.writeContractData(contractName, propName, address, walletId, (txHash)=>{
+		  lastTransactionHash = txHash;
+	    }).then(()=>{
           browser.sleep(writeTimer).then(()=>done());
         });
       }
@@ -250,7 +266,9 @@ var ContractsSteps = function() {
   this.When(/^I perform "([^"]*)" in "([^"]*)" contract from "([^"]*)/, {timeout: 2000 * 1000}, (propName, contractName, walletId, done) => {
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
-    this.page.writeContractDataNone(contractName, propName, walletId).then(()=>{
+    this.page.writeContractDataNone(contractName, propName, walletId, (txHash)=>{
+	  lastTransactionHash = txHash;
+	}).then(()=>{
       browser.sleep(writeTimer).then(()=>done());
     });
   });
@@ -269,7 +287,9 @@ var ContractsSteps = function() {
 
     this.page = new ContractsPage(deployConfig, contracts_abis); //WTF???
 
-    this.page.writeContractData2(contractName, propName, spenderAddr, value, walletId).then(()=>{
+    this.page.writeContractData2(contractName, propName, spenderAddr, value, walletId, (txHash)=>{
+	  lastTransactionHash = txHash;
+	}).then(()=>{
       browser.sleep(writeTimer).then(()=>done());
     });
   });
@@ -296,7 +316,9 @@ var ContractsSteps = function() {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
-    this.page.writeContractData(contractName, PropName,writeValue, walletId).then(()=>{
+    this.page.writeContractData(contractName, PropName,writeValue, walletId, (txHash)=>{
+	  lastTransactionHash = txHash;
+	}).then(()=>{
       done();
     });
   });
