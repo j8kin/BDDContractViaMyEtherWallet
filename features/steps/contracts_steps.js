@@ -123,9 +123,11 @@ var ContractsSteps = function() {
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
     this.page.switchToNextCycle().then(()=>{
-      this.page.readContractProperty("cycle", function(cCycle) {
-        currentCycle = cCycle;
-        done();
+      this.page.accessContract("Governance").then(()=>{
+        this.page.readContractProperty("cycle", function(cCycle) {
+          currentCycle = cCycle;
+          done();
+        });
       });
     });
   });
@@ -150,6 +152,7 @@ var ContractsSteps = function() {
     }
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
+
     this.page.readContractProperty("cycle", function(cCycle) {
       if (cCycle == expCycle) {
         done();
@@ -198,13 +201,14 @@ var ContractsSteps = function() {
   /*********************When Steps ********************************/
   //example:
   //When I write setBlockNumber to 111111 in Governance contract
-  this.When(/^I write "([^"]*)" to "([^"]*)" in "([^"]*)" contract/, {timeout: 2000 * 1000}, (writeValue, PropName, contractName, done) => {
+  this.When(/^I write "([^"]*)" to "([^"]*)" in "([^"]*)" contract$/, {timeout: 2000 * 1000}, (writeValue, PropName, contractName, done) => {
     //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
     this.page = new ContractsPage(deployConfig, contracts_abis);
     this.page.writeContractData(contractName, PropName,writeValue, "Wallet1", (txHash)=>{
-		lastTransactionHash = txHash;
-	}).then(()=>{
-      browser.sleep(writeTimer).then(()=>done());
+      lastTransactionHash = txHash;
+    }).then(()=>{
+      //browser.sleep(writeTimer).then(()=>done());
+      this.page.waitTxComplete(lastTransactionHash).then(()=>done());
     });
   });
 
@@ -217,16 +221,18 @@ var ContractsSteps = function() {
     if (typeof address === 'undefined')
     {
       this.page.writeContractData(contractName, propName, writeValue, "Wallet1", (txHash)=>{
-		lastTransactionHash = txHash;
-	  }).then(()=>{
-        browser.sleep(writeTimer).then(()=>done());
+        lastTransactionHash = txHash;
+      }).then(()=>{
+        //browser.sleep(writeTimer).then(()=>done());
+        this.page.waitTxComplete(lastTransactionHash).then(()=>done());
       });
     }
     else {
       this.page.writeContractData(contractName, propName, address, "Wallet1", (txHash)=>{
-		lastTransactionHash = txHash;
-	  }).then(()=>{
-        browser.sleep(writeTimer).then(()=>done());
+        lastTransactionHash = txHash;
+      }).then(()=>{
+        //browser.sleep(writeTimer).then(()=>done());
+        this.page.waitTxComplete(lastTransactionHash).then(()=>done());
       });
     }
   });
@@ -237,9 +243,10 @@ var ContractsSteps = function() {
       //WTF???? for unknown reason it is necessary to create this field in each step otherwise this.page is undefined.
       this.page = new ContractsPage(deployConfig, contracts_abis);
       this.page.writeContractDataBool(contractName, propName, writeValue, walletId, (txHash)=>{
-		lastTransactionHash = txHash;
-	  }).then(()=>{
-        browser.sleep(writeTimer).then(()=>done());
+        lastTransactionHash = txHash;
+      }).then(()=>{
+        //browser.sleep(writeTimer).then(()=>done());
+        this.page.waitTxComplete(lastTransactionHash).then(()=>done());
       });
     }
     else {
@@ -248,16 +255,18 @@ var ContractsSteps = function() {
       this.page = new ContractsPage(deployConfig, contracts_abis);
       if (typeof address === 'undefined') {
         this.page.writeContractData(contractName, propName, writeValue, walletId, (txHash)=>{
-		  lastTransactionHash = txHash;
-	    }).then(()=>{
-          browser.sleep(writeTimer).then(()=>done());
+          lastTransactionHash = txHash;
+        }).then(()=>{
+          //browser.sleep(writeTimer).then(()=>done());
+          this.page.waitTxComplete(lastTransactionHash).then(()=>done());
         });
       }
       else {
         this.page.writeContractData(contractName, propName, address, walletId, (txHash)=>{
-		  lastTransactionHash = txHash;
-	    }).then(()=>{
-          browser.sleep(writeTimer).then(()=>done());
+          lastTransactionHash = txHash;
+        }).then(()=>{
+          //browser.sleep(writeTimer).then(()=>done());
+          this.page.waitTxComplete(lastTransactionHash).then(()=>done());
         });
       }
     }
@@ -268,9 +277,10 @@ var ContractsSteps = function() {
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
     this.page.writeContractDataNone(contractName, propName, walletId, (txHash)=>{
-	  lastTransactionHash = txHash;
-	}).then(()=>{
-      browser.sleep(writeTimer).then(()=>done());
+      lastTransactionHash = txHash;
+    }).then(()=>{
+      //browser.sleep(writeTimer).then(()=>done());
+      this.page.waitTxComplete(lastTransactionHash).then(()=>done());
     });
   });
 
@@ -289,9 +299,10 @@ var ContractsSteps = function() {
     this.page = new ContractsPage(deployConfig, contracts_abis); //WTF???
 
     this.page.writeContractData2(contractName, propName, spenderAddr, value, walletId, (txHash)=>{
-	  lastTransactionHash = txHash;
-	}).then(()=>{
-      browser.sleep(writeTimer).then(()=>done());
+      lastTransactionHash = txHash;
+    }).then(()=>{
+      //browser.sleep(writeTimer).then(()=>done());
+      this.page.waitTxComplete(lastTransactionHash).then(()=>done());
     });
   });
   /*********************Then Steps ********************************/
@@ -468,23 +479,30 @@ var ContractsSteps = function() {
       }
     });
   });
-  
+
   this.Then(/^the last transaction is "([^"]*)"$/, function (expTxStatus, done) {
     this.rinkeyby = new RinkebyApi(deployConfig);
-	
-	this.rinkeyby.getTxHashStatus(lastTransactionHash).then((result)=>{
-		// { statusCode: 200, bodyString: '{"status":"1","message":"OK","result":{"isError":"0","errDescription":""}}' }
-		console.log(result);
-		var response = JSON.parse(result["bodyString"]);
-		var cStatus = "fail";
-		if (response["status"] == 1)
-		{
-			cStatus = "success";
-		}
-		expect(expTxStatus).to.equal(response);
-		done();
-	});
 
+    this.rinkeyby.getTxHashStatus(lastTransactionHash).then((result)=>{
+      // { statusCode: 200, bodyString: '{"status":"1","message":"OK","result":{"isError":"0","errDescription":""}}' }
+      console.log(result);
+      var response = JSON.parse(result["bodyString"]);
+      var cStatus = "fail";
+      if (response["status"] == 1)
+      {
+        cStatus = "success";
+      }
+      expect(expTxStatus).to.equal(response);
+      done();
+    });
+  });
+
+  this.Then(/^read (\d+) seconds last transaction Hash$/, function (arg1, done) {
+    // Write code here that turns the phrase above into concrete actions
+    this.page = new ContractsPage(deployConfig, contracts_abis);
+    this.page.waitTxComplete(lastTransactionHash).then(()=>{
+      done();
+    });
   });
   //done(null, 'pending');
 };

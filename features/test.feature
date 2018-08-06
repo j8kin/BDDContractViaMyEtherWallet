@@ -4,6 +4,7 @@ Feature: Test
 	Important: If contract just deployed all Tokens need to be transfered to Governance Proxy
 	Background: init test
 		Given I open myEtherWallet.com page
+		Given I switch to a new election cycle
 		Given I read current election cycle number
 		#When I claim "324000000000000000000000000" from "Governance" contract to:
 		#	| Wallet Id |
@@ -18,8 +19,10 @@ Feature: Test
     #Given Current election "cycle" is 1
 	#	Then "voterCandidate" in "Governance" contract for "99" cycle and "Wallet1" is equal to "Governance1"
 		#Given Current election cycle is <electionCycle>
+		#When I write "222222" to "setBlockNumber" in "Governance" contract
+		# Then the last transaction is "Success"
 		When I write "222222" to "setBlockNumber" in "Governance" contract
-		Then the last transaction is "Success"
+		#Then read 30 seconds last transaction Hash
 		#Then "finalistWeight" in "Governance" contract for "current" cycle is equal to "972000000000000000000000001"
     #When I write "111111" to "setBlockNumber" in "Governance" contract
 		#Then In "Governance" contract current "stage" is "1"
@@ -32,4 +35,4 @@ Feature: Test
 		#Then "candidateVoters" in "Governance" contract for "2" cycle and "candidate address" "0x8dfae32db7256e13e50a361dc8517b1e8ccc3b13" and "voters address" "0xBB64585Fa3c525394C19EBd9F74d9544308065b7" is equal to "324000000000000000000000000"
 Examples:
 	| electionCycle      | candidate1        | candidate2        |
-	| "DecisionModule"   | "DecisionModule1" | "DecisionModule2" |	
+	| "DecisionModule"   | "DecisionModule1" | "DecisionModule2" |

@@ -1,5 +1,6 @@
 var chai = require('chai').use(require('chai-as-promised'));
 var expect = chai.expect;
+var defer = protractor.promise.defer();
 
 var ContractorPage = function(deploy_config, contracts_abis) {
   let deployConfig = deploy_config;
@@ -7,11 +8,11 @@ var ContractorPage = function(deploy_config, contracts_abis) {
   const writeTimer = 30000;
 
   /******************************************************************************/
-  /**************************** COMMON FUNCTIONS ********************************/  
+  /**************************** COMMON FUNCTIONS ********************************/
   /**
    * Open www.myetherwallet.com page
    * @returns {Promise} a promise so the calling function knows the task has completed
-   */  
+   */
   this.get = function() {
     return browser.get('https://www.myetherwallet.com');
   };
@@ -20,7 +21,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
    * Access Contract: place contract address and abi data and click access
    * @param {string} contractName contract need to be accessed (for example 'Governance')
    * @returns {Promise} a promise so the calling function knows the task has completed
-   */  
+   */
   this.accessContract = function(contractName) {
     let contract_ADDR = deployConfig["contracts"][contractName];//"0xDECAF9CD2367cdbb726E904cD6397eDFcAe6068D";
     let contract_abi = JSON.stringify(contractsAbis[contractName]);
@@ -56,7 +57,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
    * Select Read/Write contract method/property etc
    * @param {string} RWProp read/write property/method to be accessed ('claim', 'close', 'approved' etc)
    * @returns {Promise} a promise so the calling function knows the task has completed
-   */    
+   */
   this.selectRWContract = function(RWProp){
     return element(by.css('[class="btn btn-default ng-binding"]')).click().then(()=>{
       //contract names could be simular (cycle, cycleCounter etc) that is why
@@ -123,7 +124,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
    * Read Contract Data with no input parameters
    * @param {string} contractProperty Contract Property to be read
    * @returns {Promise} a promise with read value
-   */  
+   */
   this.readContractProperty = function(contractProperty, fn) {
     // return a promise so the calling function knows the task has completed
     return this.selectRWContract(contractProperty).then(()=>{
@@ -140,10 +141,10 @@ var ContractorPage = function(deploy_config, contracts_abis) {
    * Read Contract Data with two parameter: cycle number and address
    * @param {string} contractProperty Contract Property to be read
    * @param {string} cycle number
-   * @param {string} address of the contract 
+   * @param {string} address of the contract
    * @returns {Promise} a promise with read value
    * for different types different input data generated on page that is why need 2 different functions
-   */  
+   */
   this.readContractDataCycleAddr = function(contractProperty, cycleNum, address, fn) {
     // return a promise so the calling function knows the task has completed
     return this.selectRWContract(contractProperty).then(()=>{
@@ -255,18 +256,19 @@ var ContractorPage = function(deploy_config, contracts_abis) {
    *  1. Set stage to 0
    *  2. approve from Owner Wallet
    *  3. close contract (this will switch to next election cycle)
-   * @returns {Promise} a promise so the calling function knows the task has completed 
-   */      
+   * @returns {Promise} a promise so the calling function knows the task has completed
+   */
   this.switchToNextCycle = function() {
     return this.accessContract("Governance").then(()=>{
-      this.writeContractData("Governance", "setBlockNumber","555555", "Owner", (TxHash) => {}).then(()=>{
-        //TODO: replace with wait rinkeby transaction complete
-        browser.sleep(writeTimer).then(()=>{
-          this.writeContractDataBool("Governance", "approve","true", "Owner", (TxHash) => {}).then(()=>{
-            //TODO: replace with wait rinkeby transaction complete
-            browser.sleep(writeTimer).then(()=>{
-              this.writeContractDataNone("Governance", "close", "Owner", (TxHash) => {}).then(()=>{
-                browser.sleep(writeTimer);
+      this.writeContractData("Governance", "setBlockNumber","555555", "Owner", (TxHash) => {
+        console.log(TxHash);
+        this.waitTxComplete(TxHash).then(()=>{
+          this.writeContractDataBool("Governance", "approve","true", "Owner", (TxHash) => {
+            console.log(TxHash);
+            this.waitTxComplete(TxHash).then(()=>{
+              this.writeContractDataNone("Governance", "close", "Owner", (TxHash) => {
+                console.log(TxHash);
+                this.waitTxComplete(TxHash);
               });
             });
           });
@@ -283,7 +285,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
    *     3. Return transaction Hash which could be used in future to validate it via rinkeby API
    * @param {string} walletId wallet id to be used to write contract data
    * @returns {Promise} a promise with transaction Hash value
-   */  
+   */
   this.performWrite = function(walletId, txHash) {
     // verify that it is necessary to choose Wallet
     browser.isElementPresent(by.xpath('//input[@ng-model="walletType" and @value="pasteprivkey"]')).then((unlockWallet)=>{
@@ -310,12 +312,13 @@ var ContractorPage = function(deploy_config, contracts_abis) {
                 // Click "I'm sure'
                 //TODO: probably it is necessary to return transaction Hash
                 element.all(by.css('[ng-click="sendTx()"]')).first().click().then(()=>{
-			      element.all(by.xpath('//a[contains(text(), "View your transaction") and @rel="noopener"]')).getAttribute('href').then((value)=>{
-				  //filename.substring(0,filename.indexOf("."));
+                  element.all(by.xpath('//a[contains(text(), "View your transaction") and @rel="noopener"]')).getAttribute('href').then((value)=>{
+                    //filename.substring(0,filename.indexOf("."));
                     TxHash = value[0].substring(value[0].lastIndexOf('/')+1);
-					txHash(TxHash);
-			      });
-			    });
+                    //console.log(TxHash);
+                    txHash(TxHash);
+                  });
+                });
               });
             });
           });
@@ -323,14 +326,14 @@ var ContractorPage = function(deploy_config, contracts_abis) {
       });
     });
   };
-  
+
   /**
    * Write Contract Data with no input parameters
    * @param {string} contractName Contract Name (for example 'Governance')
    * @param {string} contractProperty method of the contract which shoul be called (for example 'close')
    * @param {string} walletId wallet id to be used to write contract data
    * @returns {Promise} a promise with transaction Hash value
-   */    
+   */
   this.writeContractDataNone = function(contractName, contractProperty, walletId, txHash) {
     // return a promise so the calling function knows the task has completed
     //console.log("Set " + contractProperty + " to "+ value + " from wallet: '"+walletId+"'");
@@ -342,13 +345,13 @@ var ContractorPage = function(deploy_config, contracts_abis) {
   };
 
   /**
-   * Write Contract Data with one input parameter 
+   * Write Contract Data with one input parameter
    * @param {string} contractName Contract Name (for example 'Governance')
    * @param {string} contractProperty method of the contract which shoul be called (for example 'claim')
    * @param {string} value parameter value which should be used as input parameter of contractProperty
    * @param {string} walletId wallet id to be used to write contract data
    * @returns {Promise} a promise with transaction Hash value
-   */  
+   */
   this.writeContractData = function(contractName, contractProperty, value, walletId, txHash) {
     // return a promise so the calling function knows the task has completed
     //console.log("Set " + contractProperty + " to "+ value + " from wallet: '"+walletId+"'");
@@ -367,7 +370,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
       });
     });
   };
-  
+
   /**
    * Write Contract Data with one boolean input parameter (it has a different control type)
    * @param {string} contractName Contract Name (for example 'Governance')
@@ -375,7 +378,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
    * @param {string} value parameter ('true' or 'false')
    * @param {string} walletId wallet id to be used to write contract data
    * @returns {Promise} a promise with transaction Hash value
-   */  
+   */
   this.writeContractDataBool = function(contractName, contractProperty, value, walletId, txHash) {
     // return a promise so the calling function knows the task has completed
     //console.log("Set " + contractProperty + " to "+ value + " from wallet: '"+walletId+"'");
@@ -396,7 +399,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
    * @param {string} value parameter
    * @param {string} walletId wallet id to be used to write contract data
    * @returns {Promise} a promise with transaction Hash value
-   */  
+   */
   this.writeContractData2 = function(contractName, contractProperty, addr, value, walletId, txHash) {
     // return a promise so the calling function knows the task has completed
     return this.accessContract(contractName).then(()=>{
@@ -408,6 +411,50 @@ var ContractorPage = function(deploy_config, contracts_abis) {
         });
       });
     });
+ };
+
+ /**
+  * (internal) Wait for transaction complition for retry seconds
+  * @param {string} retry number of retry
+  * @returns {Promise} a promise so the calling function knows the task has completed
+  */
+  this.waitTx = function(retry) {
+   //console.log(retry);
+   if (retry > 0) {
+     return element(by.xpath('//h3[contains(text(), "Pending Transaction Found")]')).element(by.xpath('..')).getAttribute('class').then((value)=>{
+       if (value == 'cont-md')
+       {
+         browser.sleep(1000).then(()=>{
+           element(by.css('[ng-click="checkTxStatus()"]')).click().then(()=>{
+             this.waitTx(retry-1);
+           });
+         });
+       }
+     });
+   }
+   return defer.promise;
+ };
+
+ /**
+  * Wait for transaction complition for 30 seconds
+  * @param {txHash} txHash transaction Hash which need to be wait for completion
+  * @returns {Promise} a promise so the calling function knows the task has completed
+  */
+ this.waitTxComplete = function(txHash) {
+  return element(by.css('[class="nav-item NAV_CheckTxStatus"]')).click().then(()=>{
+    element(by.css('[ng-model="txInfo.hash"]')).sendKeys(TxHash).then(()=>{
+      element(by.css('[ng-click="checkTxStatus()"]')).click().then(()=>{
+        //<h3 class="text-warning ng-scope" translate="tx_foundInPending">Pending Transaction Found</h3>
+        browser.isElementPresent(by.xpath('//h3[contains(text(), "Pending Transaction Found")]')).then(()=>{
+          this.waitTx(30).then(()=>{
+            element(by.xpath('//*[@class="nav-item NAV_Contracts" or @class="nav-item NAV_Contracts active"]')).click().then(()=>{
+              browser.sleep(1000);
+            });
+          });
+        });
+      });
+    });
+  });
  };
  ///add new function on this level
 };

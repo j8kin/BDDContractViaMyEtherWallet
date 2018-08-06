@@ -96,4 +96,4 @@ Feature: Election cycle
 Examples:
 	| electionCycle      | candidate1        | candidate2        |
 	| "Governance"       | "Governance1"     | "Governance2"     |
-	| "DecisionModule"   | "DecisionModule1" | "DecisionModule2" |	
+	| "DecisionModule"   | "DecisionModule1" | "DecisionModule2" |
