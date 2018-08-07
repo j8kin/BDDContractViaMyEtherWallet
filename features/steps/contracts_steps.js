@@ -306,14 +306,19 @@ var ContractsSteps = function() {
     });
   });
 
+  // Examples:
+  // 1)	When I perform "claim" from "Governance" contract with:
+  //  			| ACX                         | Wallet Id |
+  //        | 324000000000000000000000000 | Wallet1   |
+  // 2)	When I perform "increaseApproval" from "AccessToken" contract with:
+  //			| Address    | ACX                         | Wallet Id |
+  //			| Governance | 324000000000000000000000000 | Wallet1   |
   this.When(/^I perform "([^"]*)" from "([^"]*)" contract with:$/, function (propName, contractName, table, done) {
     this.page = new ContractsPage(deployConfig, contracts_abis); //WTF???
     // Write code here that turns the phrase above into concrete actions
     var arrayRows = table.hashes();
     var i = arrayRows.length;
     arrayRows.forEach((rowDataDict)=>{
-      //console.log(rowDataDict);
-      //console.log(Object.keys(rowDataDict).length);
       switch (Object.keys(rowDataDict).length) {
         case 2:
           // two parameters
@@ -328,7 +333,6 @@ var ContractsSteps = function() {
             this.page.writeContractDataBool(contractName, propName, value, walletId, (txHash)=>{
               lastTransactionHash = txHash;
             }).then(()=>{
-              //browser.sleep(writeTimer).then(()=>done());
               this.page.waitTxComplete(lastTransactionHash).then(()=>{
                 i -= 1;
                 if (i == 0) {
@@ -372,9 +376,14 @@ var ContractsSteps = function() {
           });
           break;
         default:
+          // this branch should never be reached that is why fail test script
+          console.log("Number of parameters in input table is unexpected");
+          expect(true).to.equal(false);
+          break;
       }
     });
   });
+
   /*********************Then Steps ********************************/
   /**** These steps are used only to verify some data in contract */
   /**** avoid to set any values in these steps                    */
@@ -387,7 +396,7 @@ var ContractsSteps = function() {
 
     this.page.accessContract(contractName).then(()=>{
       this.page.readContractProperty(propName, function(val) {
-        expect(val).to.equal(expectedVal);
+        expect(expectedVal).to.equal(val);
         done();
       });
     });
@@ -399,8 +408,8 @@ var ContractsSteps = function() {
     this.page = new ContractsPage(deployConfig, contracts_abis);
 
     this.page.writeContractData(contractName, PropName,writeValue, walletId, (txHash)=>{
-	  lastTransactionHash = txHash;
-	}).then(()=>{
+      lastTransactionHash = txHash;
+    }).then(()=>{
       done();
     });
   });
@@ -555,7 +564,7 @@ var ContractsSteps = function() {
 
     this.rinkeyby.getTxHashStatus(lastTransactionHash).then((result)=>{
       // { statusCode: 200, bodyString: '{"status":"1","message":"OK","result":{"isError":"0","errDescription":""}}' }
-      console.log(result);
+      //console.log(result);
       var response = JSON.parse(result["bodyString"]);
       var cStatus = "fail";
       if (response["status"] == 1)
@@ -567,11 +576,22 @@ var ContractsSteps = function() {
     });
   });
 
-  this.Then(/^read (\d+) seconds last transaction Hash$/, function (arg1, done) {
+  this.Then(/^value of "([^"]*)" in "([^"]*)" contract is "([^"]*)"$/, function (propName, contractName, expectedVal, done) {
     // Write code here that turns the phrase above into concrete actions
     this.page = new ContractsPage(deployConfig, contracts_abis);
-    this.page.waitTxComplete(lastTransactionHash).then(()=>{
-      done();
+    this.page.accessContract(contractName).then(()=>{
+      if ((expectedVal.toLowerCase() == 'true') || (expectedVal.toLowerCase() == 'false')) {
+        this.page.readContractPropertyBool(propName, function(value) {
+          expect(expectedVal.toLowerCase()).to.equal(value.toLowerCase());
+          done();
+        });
+      }
+      else {
+        this.page.readContractProperty(propName, function(val) {
+          expect(expectedVal).to.equal(val);
+          done();
+        });
+      }
     });
   });
   //done(null, 'pending');

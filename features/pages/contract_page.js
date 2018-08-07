@@ -130,8 +130,35 @@ var ContractorPage = function(deploy_config, contracts_abis) {
     return this.selectRWContract(contractProperty).then(()=>{
       // give 2 sec for myetherwallet to get data from rinkeyby contract
       browser.sleep(2000).then(()=>{
-        element(by.css('[placeholder="151"]')).getAttribute('value').then((value) => {
+        /*
+        <input class="form-control ng-pristine ng-valid ng-not-empty ng-touched" type="text" placeholder="" ng-model="output.value" readonly="">
+        */
+        element(by.css('[ng-model="output.value"]')).getAttribute('value').then((value) => {
           fn(value);
+        });
+      });
+    })
+  };
+
+  /**
+   * Read Contract Data with no input parameters. Return value is boolean
+   * @param {string} contractProperty Contract Property to be read
+   * @returns {Promise} a promise with read value
+   */
+  this.readContractPropertyBool = function(contractProperty, fn) {
+    // return a promise so the calling function knows the task has completed
+    return this.selectRWContract(contractProperty).then(()=>{
+      // give 2 sec for myetherwallet to get data from rinkeyby contract
+      browser.sleep(2000).then(()=>{
+        element(by.xpath('//span[contains(@class,"output-boolean") and contains(@class,"ng-hide")]')).getAttribute('class').then((value) => {
+          // element which contain ng-hide is not selected that is why return opposit element value
+          if (value.indexOf('true') != -1)
+          {
+            fn('false');
+          }
+          else {
+            fn('true');
+          }
         });
       });
     })
@@ -261,13 +288,13 @@ var ContractorPage = function(deploy_config, contracts_abis) {
   this.switchToNextCycle = function() {
     return this.accessContract("Governance").then(()=>{
       this.writeContractData("Governance", "setBlockNumber","555555", "Owner", (TxHash) => {
-        console.log(TxHash);
+        //console.log(TxHash);
         this.waitTxComplete(TxHash).then(()=>{
           this.writeContractDataBool("Governance", "approve","true", "Owner", (TxHash) => {
-            console.log(TxHash);
+            //console.log(TxHash);
             this.waitTxComplete(TxHash).then(()=>{
               this.writeContractDataNone("Governance", "close", "Owner", (TxHash) => {
-                console.log(TxHash);
+                //console.log(TxHash);
                 this.waitTxComplete(TxHash);
               });
             });
