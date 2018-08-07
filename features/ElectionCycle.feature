@@ -9,13 +9,13 @@ Feature: Election cycle
 		Given election cycle is set to <electionCycle>
 		Given Current election cycle is <electionCycle>
 		Given I read current election cycle number
-		Given I claim "324000000000000000000000000" from "Governance" contract to:
-			| Wallet Id |
-			| Wallet1   |
-			| Wallet2   |
-			| Wallet3   |
-			| Wallet4   |
-			| Wallet5   |
+		When I perform "claim" from "Governance" contract with:
+			| ACX                         | Wallet Id |
+			| 324000000000000000000000000 | Wallet1   |
+			| 324000000000000000000000000 | Wallet2   |
+			| 324000000000000000000000000 | Wallet3   |
+			| 324000000000000000000000000 | Wallet4   |
+			| 324000000000000000000000000 | Wallet5   |
 
 		#Submit Candidate Phase
 		#Verify that if Governance election performed during Descision Module election phase then even if new Governance is elected, Governance will not be changed
@@ -34,11 +34,13 @@ Feature: Election cycle
 		When I write "222222" to "setBlockNumber" in "Governance" contract
 		Then In "Governance" contract current "stage" is "2"
 		# allow Wallets participate in election
-		When I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet1"
-			And I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet2"
-			And I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet3"
-			And I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet4"
-			And I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet5"
+		When I perform "increaseApproval" from "AccessToken" contract with:
+			| Address    | ACX                         | Wallet Id |
+			| Governance | 324000000000000000000000000 | Wallet1   |
+			| Governance | 324000000000000000000000000 | Wallet2   |
+			| Governance | 324000000000000000000000000 | Wallet3   |
+			| Governance | 324000000000000000000000000 | Wallet4   |
+			| Governance | 324000000000000000000000000 | Wallet5   |
 		# Now perform selection
 		When I perform "transferSelect" with <candidate1> address and "324000000000000000000000000" in "Governance" contract from "Wallet1"
 		Then "finalist" in "Governance" contract for "current" cycle is equal to <candidate1>
@@ -66,19 +68,22 @@ Feature: Election cycle
 	# Verify that during descision phase wallets could elect selected finalist
 		When I write "444444" to "setBlockNumber" in "Governance" contract
 		Then In "Governance" contract current "stage" is "3"
-		Given I claim "324000000000000000000000000" from "Governance" contract to:
-			| Wallet Id |
-			| Wallet1   |
-			| Wallet2   |
-			| Wallet3   |
-			| Wallet4   |
-			| Wallet5   |
+		When I perform "claim" from "Governance" contract with:
+			| ACX                         | Wallet Id |
+			| 324000000000000000000000000 | Wallet1   |
+			| 324000000000000000000000000 | Wallet2   |
+			| 324000000000000000000000000 | Wallet3   |
+			| 324000000000000000000000000 | Wallet4   |
+			| 324000000000000000000000000 | Wallet5   |
+
 		# allow Wallets participate in descision
-		When I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet1"
-			And I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet2"
-			And I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet3"
-			And I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet4"
-			And I perform "increaseApproval" with "Governance" address and "324000000000000000000000000" in "AccessToken" contract from "Wallet5"
+		When I perform "increaseApproval" from "AccessToken" contract with:
+			| Address    | ACX                         | Wallet Id |
+			| Governance | 324000000000000000000000000 | Wallet1   |
+			| Governance | 324000000000000000000000000 | Wallet2   |
+			| Governance | 324000000000000000000000000 | Wallet3   |
+			| Governance | 324000000000000000000000000 | Wallet4   |
+			| Governance | 324000000000000000000000000 | Wallet5   |
 		When I perform "transferDecide" with "324000000000000000000000000" parameter in "Governance" contract from "Wallet1"
 		Then "isQuorumReached" in "Governance" contract for "current" cycle is equal to "false"
 		When I perform "transferDecide" with "324000000000000000000000000" parameter in "Governance" contract from "Wallet2"

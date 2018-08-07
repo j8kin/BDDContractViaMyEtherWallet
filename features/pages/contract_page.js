@@ -365,7 +365,7 @@ var ContractorPage = function(deploy_config, contracts_abis) {
           searchPattern = '[placeholder="151"]'
         }
         element(by.css(searchPattern)).sendKeys(value).then(()=>{
-		  this.performWrite(walletId, (TxHash) => {txHash(TxHash);});
+          this.performWrite(walletId, (TxHash) => {txHash(TxHash);});
         });
       });
     });

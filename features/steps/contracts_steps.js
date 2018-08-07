@@ -305,6 +305,76 @@ var ContractsSteps = function() {
       this.page.waitTxComplete(lastTransactionHash).then(()=>done());
     });
   });
+
+  this.When(/^I perform "([^"]*)" from "([^"]*)" contract with:$/, function (propName, contractName, table, done) {
+    this.page = new ContractsPage(deployConfig, contracts_abis); //WTF???
+    // Write code here that turns the phrase above into concrete actions
+    var arrayRows = table.hashes();
+    var i = arrayRows.length;
+    arrayRows.forEach((rowDataDict)=>{
+      //console.log(rowDataDict);
+      //console.log(Object.keys(rowDataDict).length);
+      switch (Object.keys(rowDataDict).length) {
+        case 2:
+          // two parameters
+          var value = rowDataDict[Object.keys(rowDataDict)[0]];
+          if ((Object.keys(rowDataDict)[0]).toLowerCase() == 'address')
+          {
+            value = deployConfig['contracts'][value];
+          }
+          var walletId = rowDataDict[Object.keys(rowDataDict)[1]];
+          if ((value.toLowerCase() == 'true') || ((value.toLowerCase() == 'false')))
+          {
+            this.page.writeContractDataBool(contractName, propName, value, walletId, (txHash)=>{
+              lastTransactionHash = txHash;
+            }).then(()=>{
+              //browser.sleep(writeTimer).then(()=>done());
+              this.page.waitTxComplete(lastTransactionHash).then(()=>{
+                i -= 1;
+                if (i == 0) {
+                  done();
+                }
+              });
+            });
+          }
+          else {
+            this.page.writeContractData(contractName, propName, value, walletId, (txHash)=>{
+              lastTransactionHash = txHash;
+            }).then(()=>{
+              this.page.waitTxComplete(lastTransactionHash).then(()=>{
+                i -= 1;
+                if (i == 0) {
+                  done();
+                }
+              });
+            });
+          }
+          break;
+        case 3:
+          // three parameters
+          var spenderAddr = rowDataDict[Object.keys(rowDataDict)[0]];
+          if ((Object.keys(rowDataDict)[0]).toLowerCase() == 'address')
+          {
+            spenderAddr = deployConfig['contracts'][rowDataDict[Object.keys(rowDataDict)[0]]];
+          }
+          var value = rowDataDict[Object.keys(rowDataDict)[1]];
+          var walletId = rowDataDict[Object.keys(rowDataDict)[2]];
+          this.page.writeContractData2(contractName, propName, spenderAddr, value, walletId, (txHash)=>{
+            lastTransactionHash = txHash;
+          }).then(()=>{
+            //browser.sleep(writeTimer).then(()=>done());
+            this.page.waitTxComplete(lastTransactionHash).then(()=>{
+              i -= 1;
+              if (i == 0) {
+                done();
+              }
+            });
+          });
+          break;
+        default:
+      }
+    });
+  });
   /*********************Then Steps ********************************/
   /**** These steps are used only to verify some data in contract */
   /**** avoid to set any values in these steps                    */
